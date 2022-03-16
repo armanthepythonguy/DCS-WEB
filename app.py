@@ -35,12 +35,12 @@ def login():
                 print("Gt here")
                 sessions = db.child("sessions").child(user['localId']).set({"active":str(uuid.uuid4())})
                 return {"auth":typeofuser,"msg":"Previous session terminated"}
-
-
         except:
             return {"auth" : False, "msg":"Invalid Credentials"}
     else:
         return {"auth":"Something is wrong"}
+
+
 
 @app.route('/logout',methods = ['POST'])  
 def logout():
@@ -81,6 +81,8 @@ def addusers():
     else:
         return {"auth":False, "msg":"Something is wrong"}
 
+
+
 @app.route('/addmovie', methods=['POST'])  
 def addmovie():
     if request.method == 'POST':
@@ -96,6 +98,29 @@ def addmovie():
         except:
             return {"auth":False}
 
+
+
+@app.route('/getcomments', methods=['POST'])
+def getcomments():
+    if request.method == 'POST':
+        try:
+            movieid = request.json['movieid']
+            movie = db.child("movies").child(movieid).get()
+            movie = movie.val()
+            print(movie)
+            comments = []
+            for i in movie:
+                if i!='name' or i!='desc':
+                    comment = db.child("movies").child(movieid).child(i).child('comment').get()
+                    comment = comment.val()
+                    comments.append(comment)
+            return {"comments":comments}
+        except:
+            return {"auth":False}
+
+
+
+
 @app.route('/addcomment', methods=['POST'])  
 def addcomment():
     if request.method == 'POST':
@@ -105,19 +130,23 @@ def addcomment():
             movieid = request.json['movieid']
             users = db.child("users").get()
             users = users.val()
+            print(users)
             for i in users:
-                foundemail = db.child("users").child(i).get()
+                foundemail = db.child("users").child(i).child("email").get()
                 foundemail = foundemail.val()
+                print(foundemail)
                 if foundemail == email:
                     user = i
             data = {
                 "email":email,
                 "comment":comment
             }
-            result = db.child("movies").child(movieid).child(i).set(data)
+            result = db.child("movies").child(movieid).child(user).set(data)
             return {"auth":True}
         except:
             return {"auth":False}
+
+
       
 @app.route('/updatecomment', methods=['POST'])  
 def updatecomment():
@@ -142,6 +171,9 @@ def updatecomment():
         except:
             return {"auth":False}
 
+
+
+
 @app.route('/deletecomment', methods=['POST'])  
 def deletecomment():
     if request.method == 'POST':
@@ -159,8 +191,6 @@ def deletecomment():
             return {"auth":True}
         except:
             return {"auth":False}
-
-
 
 
 
